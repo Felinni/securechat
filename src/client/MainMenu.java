@@ -1,10 +1,16 @@
 package client;
 
 import java.util.Scanner;
+import java.util.Collection;
+
+import org.jivesoftware.smack.Roster;
+import org.jivesoftware.smack.RosterEntry;
+import org.jivesoftware.smack.XMPPConnection;
 
 public class MainMenu {
 	
 	private Scanner _scanner;
+	private Account _account;
 	
 	private String _menu = "1 - Show available users\n" +
 			"0 - Exit";
@@ -14,24 +20,31 @@ public class MainMenu {
 	}
 	
 	public void setUp(Account account){
-		//Register
-		System.out.println("Let's register a new user.");
 		String user, pass;
 		System.out.print("Username: ");
 		user = _scanner.next();
 		System.out.print("Password: ");
 		pass = _scanner.next();
-		account = new Account(user, pass);
-		
-		//Confirmation
-		System.out.println("You have successfully registered as " + user + ".");
+		_account = new Account(user, pass);
+		if(_account.login()){
+			System.out.println("Successfully logged in on " + user +".");
+		} else {
+			return;
+		}	
 	}
 	
 	public void showMenu(){
-		int opt;
+		/*int opt;
 		System.out.println(_menu);
-		opt = _scanner.nextInt();
-		
+		opt = _scanner.nextInt();*/
+		XMPPConnection accountcon = _account.get_con();
+		Roster roster = accountcon.getRoster();
+		Collection<RosterEntry> entries = roster.getEntries();
+		for(RosterEntry entry : entries){
+			System.out.println(entry);
+		}
+		int opt = _scanner.nextInt();
+		_account.logout();
 	}
 
 }
