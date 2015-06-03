@@ -44,6 +44,7 @@ public class MainMenu {
 		_chatmgr.addChatListener(new ChatManagerListener(){
 			@Override
 			public void chatCreated(Chat chat, boolean localchat) {
+				System.out.println("Incoming chat");
 				if(!localchat && _chat==null){
 					_chat = chat;
 					_chat.addMessageListener(new MessageListener(){
@@ -51,14 +52,20 @@ public class MainMenu {
 						@Override
 						public void processMessage(Chat chat, Message message) {
 							//TODO: Add decryption here
+							if(message.getBody().equals("exit")){
+								_chat=null;
+								System.out.println("Chat closed by the other user");
+							}
 							if(chat==_chat)
 								System.out.println(message.getFrom() + ":" + message.getBody());
 							else System.out.println("Someone else is trying to send you a message");
 						}
 						
 					});
+				} else {
+					return;
 				}
-				chat(null, false);
+				chat();
 			}
 			
 		});
@@ -74,7 +81,7 @@ public class MainMenu {
 			} else if(opt==2){
 				System.out.println("Enter username of whom you which to chat with:");
 				String user = _scanner.next();
-				chat(user, true);
+				startChat(user);
 			} else if(opt==0){
 				_account.logout();
 				return;
@@ -94,8 +101,8 @@ public class MainMenu {
 		}
 	}
 	
-	public void chat(String user, boolean local){
-		if(local && _chat==null){
+	public void startChat(String user){
+		if(_chat==null){
 			System.out.println("Going to create chat");
 			_chat = _chatmgr.createChat(user, new MessageListener() {
 				@Override
@@ -103,21 +110,28 @@ public class MainMenu {
 					//TODO: Add decryption here
 					if(chat==_chat)
 						System.out.println(message.getFrom() + ":" + message.getBody());
-					else System.out.println("Someone else is trying to send you a message");
 				}
 			});
+			System.out.println("Chat created: " + _chat.toString());
+			chat();
 		}
+	}
+	
+	public void chat(){
 		while(true){
 			String send = _scanner.next();
-			if(!send.equals("exit")){
-				try {
+			try {
+				if(!send.equals("exit")){
 					_chat.sendMessage(send);
-				} catch (XMPPException e) {
-					System.out.println("Failed to send the message");
-					System.out.println(e.getMessage());
+				} else {
+					_chat.sendMessage(send);
+					_chat = null;
+					System.out.println("Chat closed");
+					return;
 				}
-			} else {
-				_chat = null;
+			} catch (XMPPException e) {
+				System.out.println("Failed to send the message");
+				System.out.println(e.getMessage());
 			}
 		}
 	}
