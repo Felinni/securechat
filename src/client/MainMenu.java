@@ -24,6 +24,7 @@ public class MainMenu {
 			"0 - Exit";
 	
 	public MainMenu(){
+		_chat = null;
 		_scanner = new Scanner(System.in);
 	}
 	
@@ -57,7 +58,7 @@ public class MainMenu {
 						
 					});
 				}
-				
+				chat(null, false);
 			}
 			
 		});
@@ -72,12 +73,13 @@ public class MainMenu {
 				showFriends();
 			} else if(opt==2){
 				System.out.println("Enter username of whom you which to chat with:");
-				String user = _scanner.nextLine();
+				String user = _scanner.next();
 				chat(user, true);
 			} else if(opt==0){
 				_account.logout();
 				return;
 			}
+			System.out.println(_menu);
 			opt = _scanner.nextInt();
 		}
 	}
@@ -94,6 +96,7 @@ public class MainMenu {
 	
 	public void chat(String user, boolean local){
 		if(local && _chat==null){
+			System.out.println("Going to create chat");
 			_chat = _chatmgr.createChat(user, new MessageListener() {
 				@Override
 				public void processMessage(Chat chat, Message message) {
@@ -105,7 +108,7 @@ public class MainMenu {
 			});
 		}
 		while(true){
-			String send = _scanner.nextLine();
+			String send = _scanner.next();
 			if(!send.equals("exit")){
 				try {
 					_chat.sendMessage(send);
