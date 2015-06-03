@@ -1,6 +1,7 @@
 package client;
 
 import org.jivesoftware.smack.ConnectionConfiguration;
+import org.jivesoftware.smack.Roster;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 
@@ -10,6 +11,7 @@ public class Account {
 	private String _password;
 	private ConnectionConfiguration _conConf;
 	private XMPPConnection _con;
+	private Roster _roster;
 	
 	public Account(String user, String password){
 		_user = user;
@@ -20,9 +22,10 @@ public class Account {
 	
 	public boolean login(){
 		try {
-			_con.connect();
 			System.out.println("Logging in...");
+			_con.connect();
 			_con.login(_user, _password);
+			_roster = _con.getRoster();
 		} catch (XMPPException e) {
 			System.out.println("Login failed.");
 			e.printStackTrace();
@@ -33,6 +36,10 @@ public class Account {
 	
 	public void logout(){
 		_con.disconnect();
+	}
+	
+	public void addFriend(){
+		
 	}
 
 	public String get_user() {
@@ -46,5 +53,11 @@ public class Account {
 	public XMPPConnection get_con() {
 		return _con;
 	}
+
+	public Roster get_roster() {
+		return _roster;
+	}
+	
+	
 	
 }
