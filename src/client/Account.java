@@ -14,7 +14,7 @@ public class Account {
 	public Account(String user, String password){
 		_user = user;
 		_password = password;
-		_conConf = new ConnectionConfiguration("192.168.1.108", 5222, "feline.com");
+		_conConf = new ConnectionConfiguration("192.168.1.82", 5222, "feline.com");
 		_con = new XMPPConnection(_conConf);
 	}
 	

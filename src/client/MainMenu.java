@@ -43,6 +43,7 @@ public class MainMenu {
 		for(RosterEntry entry : entries){
 			System.out.println(entry);
 		}
+		System.out.println("This is your list of friends.");
 		int opt = _scanner.nextInt();
 		_account.logout();
 	}
