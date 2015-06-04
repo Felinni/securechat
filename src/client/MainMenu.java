@@ -1,23 +1,24 @@
 package client;
 
-import java.util.Scanner;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Collection;
 
 import org.jivesoftware.smack.Chat;
 import org.jivesoftware.smack.ChatManager;
-import org.jivesoftware.smack.MessageListener;
 import org.jivesoftware.smack.Roster;
 import org.jivesoftware.smack.RosterEntry;
-import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.ChatManagerListener;
 
-public class MainMenu {
+public class MainMenu implements Runnable{
 	
-	private Scanner _scanner;
+	private BufferedReader _scanner;
 	private Account _account;
 	private Chat _chat;
 	private ChatManager _chatmgr;
+	private ChatRoom _chatroom;
+	private String opt;
 	
 	private String _menu = "1 - Show all users\n" +
 			"2 - Chat with friend\n" +
@@ -25,69 +26,105 @@ public class MainMenu {
 	
 	public MainMenu(){
 		_chat = null;
-		_scanner = new Scanner(System.in);
+		_chatroom = new ChatRoom();
+		_scanner = new BufferedReader(new InputStreamReader(System.in));
 	}
 	
 	public void setUp(Account account){
 		String user, pass;
 		System.out.print("Username: ");
-		user = _scanner.next();
-		System.out.print("Password: ");
-		pass = _scanner.next();
-		_account = new Account(user, pass);
-		if(_account.login()){
-			System.out.println("Successfully logged in on " + user +".");
-		} else {
-			return;
-		}
-		_chatmgr = _account.get_con().getChatManager();
-		_chatmgr.addChatListener(new ChatManagerListener(){
-			@Override
-			public void chatCreated(Chat chat, boolean localchat) {
-				System.out.println("Incoming chat");
-				if(!localchat && _chat==null){
-					_chat = chat;
-					_chat.addMessageListener(new MessageListener(){
-
-						@Override
-						public void processMessage(Chat chat, Message message) {
-							//TODO: Add decryption here
-							if(message.getBody().equals("exit")){
-								_chat=null;
-								System.out.println("Chat closed by the other user");
-							}
-							if(chat==_chat)
-								System.out.println(message.getFrom() + ":" + message.getBody());
-							else System.out.println("Someone else is trying to send you a message");
-						}
-						
-					});
-				} else {
-					return;
-				}
-				chat();
-			}
-			
-		});
-	}
-	
-	public void showMenu(){
-		int opt;
-		System.out.println(_menu);
-		opt = _scanner.nextInt();
-		while(true){
-			if(opt==1){
-				showFriends();
-			} else if(opt==2){
-				System.out.println("Enter username of whom you which to chat with:");
-				String user = _scanner.next();
-				startChat(user);
-			} else if(opt==0){
-				_account.logout();
+		try {
+			user = _scanner.readLine();
+			System.out.print("Password: ");
+			pass = _scanner.readLine();
+			_account = new Account(user, pass);
+			if(_account.login()){
+				System.out.println("Successfully logged in on " + user +".");
+			} else {
 				return;
 			}
+			_chatmgr = _account.get_con().getChatManager();
+			_chatmgr.addChatListener(new ChatManagerListener(){
+				@Override
+				public void chatCreated(Chat chat, boolean localchat) {
+					if(!localchat && _chat==null){
+						System.out.println("User " + chat.getParticipant() + " wants to chat, enter anything to continue");
+						System.out.println("Chat started");
+						//_chat = _chatmgr.createChat(chat.getParticipant(), null);
+						_chat = chat;
+						_chatroom.set_chat(_chat);
+						_chatroom.run();
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+						while(_chatroom.is_run()){
+							try {
+								Thread.sleep(100);
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+						System.out.println("Boop");
+
+					} else {
+						return;
+					}
+				}
+				
+			});
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+	
+	public void run(){
+		try {
+			showMenu();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void showMenu() throws IOException{
+		System.out.println(_menu);
+		opt = _scanner.readLine();
+		while(true){
+			if(opt.equals("1")){
+				showFriends();
+				opt = null;
+			} else if(opt.equals("2")){
+				System.out.println("Enter username of whom you which to chat with:");
+				String user = _scanner.readLine();
+				user += "@feline.com";
+				opt = null;
+				startChat(user);
+			} else if(opt.equals("0")){
+				_account.logout();
+				return;
+			} else {
+				System.out.println("Waiting for chat room to close");
+				try{
+					Thread.sleep(2000);
+					while(_chatroom.is_run()){
+						Thread.sleep(100);
+					}
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				System.out.println("Chat closed");
+				opt = null;
+			}
+			System.out.println(opt);
 			System.out.println(_menu);
-			opt = _scanner.nextInt();
+			opt = _scanner.readLine();
 		}
 	}
 
@@ -103,36 +140,20 @@ public class MainMenu {
 	
 	public void startChat(String user){
 		if(_chat==null){
-			System.out.println("Going to create chat");
-			_chat = _chatmgr.createChat(user, new MessageListener() {
-				@Override
-				public void processMessage(Chat chat, Message message) {
-					//TODO: Add decryption here
-					if(chat==_chat)
-						System.out.println(message.getFrom() + ":" + message.getBody());
+			System.out.println("Going to create chat with user " + user);
+			_chat = _chatmgr.createChat(user, null);
+			System.out.println("Chat created: " + _chat.getParticipant());
+			_chatroom.set_chat(_chat);
+			_chatroom.run();
+			while(_chatroom.is_run()){
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
-			});
-			System.out.println("Chat created: " + _chat.toString());
-			chat();
-		}
-	}
-	
-	public void chat(){
-		while(true){
-			String send = _scanner.next();
-			try {
-				if(!send.equals("exit")){
-					_chat.sendMessage(send);
-				} else {
-					_chat.sendMessage(send);
-					_chat = null;
-					System.out.println("Chat closed");
-					return;
-				}
-			} catch (XMPPException e) {
-				System.out.println("Failed to send the message");
-				System.out.println(e.getMessage());
 			}
+			_chat=null;
 		}
 	}
 
