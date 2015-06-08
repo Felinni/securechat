@@ -27,6 +27,7 @@ import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.KeyPurposeId;
 import org.bouncycastle.asn1.x509.KeyUsage;
 import org.bouncycastle.asn1.x509.X509Extensions;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.Roster;
@@ -65,7 +66,8 @@ public class Account {
 		//Key pair and certificate settings
 		KeyPairGenerator keyGen;
 		try {
-			keyGen = KeyPairGenerator.getInstance("RSA");
+		    Security.addProvider(new BouncyCastleProvider());
+			keyGen = KeyPairGenerator.getInstance("RSA", "BC");
 			keyGen.initialize(1024);
 			KeyPair key = keyGen.generateKeyPair();
 			BASE64Encoder b64 = new BASE64Encoder();
@@ -76,8 +78,8 @@ public class Account {
 	        System.out.println("Public key: " + _pubKey);
 	        //System.out.println("Private key: " + _privKey);
 	        createX509Certificate();
-	        printX509Certificate();
-		} catch (NoSuchAlgorithmException e) {
+	        if(debug) printX509Certificate();
+		} catch (NoSuchAlgorithmException | NoSuchProviderException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}		
