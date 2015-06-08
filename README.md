@@ -11,4 +11,4 @@ XMPP based chat with both bouncycastle and java encryption systems
 ### Notes
 The chat is made in the console and it has a very [basic] implementation of an XMPP chat.
 There is still a lot of things that can be improved in the security mechanisms.
-It uses self-signed public key certificates (X509) from bouncy castle that are already deprecated.
+It uses self-signed public key certificates (X509) from bouncycastle that are deprecated.
