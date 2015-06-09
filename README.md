@@ -20,3 +20,4 @@ It uses self-signed public key certificates (X509) from bouncycastle that are de
   - Use better mechanism for initialization vector of CBT
   - Change the certificate mechanism
   - Change symmetric key size (currently 128bit due to java policies)
+  - Implement certificate storage
